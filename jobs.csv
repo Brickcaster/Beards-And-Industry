@@ -1,0 +1,21 @@
+name,training,working,sick,injured,workshop,workshoptime,workshopbp,toolrate,minimum tool,workrate,cumulative tool usage,reqres1,reqresrate1,reqres2,reqresrate2,reqres3,reqresrate3,output1,outputrate1,output2,outputrate2,output3,outputrate3,visible,obsolete
+hunting,0,6,0,0,,,,,,1,,,,,,,,food,1.2,skins,0.2,,,TRUE,FALSE
+wood gathering,0,0,0,0,,,,,,0.15,,,,,,,,wood,1,,,,,TRUE,FALSE
+stone gathering,0,0,0,0,,,,,,0.15,,,,,,,,stone,1,,,,,TRUE,FALSE
+basic builder,0,0,0,0,,,,,,0.2,,wood,2,stone,1,,,build points,1,,,,,TRUE,FALSE
+stone toolmaker,0,0,0,0,,,,,,0.644615384615385,0.0537179487179487,wood,1,stone,1,,,stone tools,1,,,,,FALSE,FALSE
+elder,0,0,0,0,,,,,,1,,,,,,,,research points,1,,,,,FALSE,FALSE
+farmer,0,0,0,0,0,120,,0.001,stone tools,1,0.00257142857142857,,,,,,,food,1.4,skins,0.1,,,FALSE,FALSE
+woodcutter,0,0,0,0,0,20,,0.001,stone tools,0.3,0.0119047619047619,,,,,,,wood,1,,,,,,FALSE
+quarrier,0,0,0,0,0,20,,0.005,stone tools,0.2,0.0378571428571429,,,,,,,stone,1,,,,,,FALSE
+builder,0,0,0,0,0,60,,0.002,stone tools,0.3,,wood,2,stone,1,,,build points,1,,,,,,FALSE
+prospector,0,0,0,0,,120,,0.005,stone tools,1,0.00507142857142857,,,,,,,copper vein,2,gold vein,0.1,,,FALSE,FALSE
+copper miner,0,0,0,0,,,,0.005,stone tools,0.15,0.0555476190476191,copper vein,1,,,,,copper ore,1,,,,,FALSE,FALSE
+iron miner,0,0,0,0,,,,0.005,stone tools,0.1,,iron vein,1,,,,,iron ore,1,,,,,FALSE,FALSE
+gold miner,0,0,0,0,,,,0.005,stone tools,0.01,,gold vein,1,,,,,gold ore,1,,,,,FALSE,FALSE
+coal miner,0,0,0,0,,,,0.005,stone tools,0.2,,coal vein,1,,,,,coal,1,,,,,,FALSE
+copper smelter,0,0,0,0,0,60,10,0.001,stone tools,0.2,0.259857142857143,copper ore,4,wood,2,,,copper bars,1,,,,,,FALSE
+copper toolmaker,0,0,0,0,0,60,10,0.001,stone tools,0.352644897959184,0.29387074829932,copper bars,1,wood,2,,,copper tools,1,,,,,,FALSE
+tanner,0,0,0,0,0,60,10,0.001,stone tools,0.2,1,skins,1,,,,,,,,,,,,FALSE
+charcoal maker,0,0,0,0,,30,,,,0.2,,wood,3,,,,,coal,1,,,,,,FALSE
+iron smelter,0,0,0,0,0,120,10,0.001,stone tools,0.15,,iron ore,6,coal,1,,,iron bars,1,,,,,,FALSE

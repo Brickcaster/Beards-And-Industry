@@ -1,0 +1,5 @@
+name,cost,reqres1,reqresrate1,reqres2,reqresrate2,reqres3,reqresrate3,visible,unlock1,unlock2,unlock3
+tools,10,,,,,,,,writing,,
+writing,20,,,,,,,,metal working,,
+metal working,40,,,,,,,,iron working,,
+iron working,100,,,,,,,,,,

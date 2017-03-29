@@ -1,0 +1,24 @@
+name,stock,storage,income,spending,visible
+population,7,0,,,TRUE
+workers,0,0,,,TRUE
+food,20,100,,,TRUE
+wood,0,100,,,TRUE
+stone,0,100,,,TRUE
+build points,0,100,,,TRUE
+research points,0,,,,
+copper vein,0,,,,
+iron vein,0,,,,
+gold vein,0,,,,
+coal vein,0,,,,
+copper ore,0,1000,,,
+iron ore,0,1000,,,
+gold ore,0,1000,,,
+coal,0,100,,,
+copper bars,0,100,,,
+iron bars,0,100,,,
+gold bars,0,5,,,
+stone tools,0,10,,,
+copper tools,0,10,,,
+iron tools,0,10,,,
+skins,0,100,,,
+leather,0,100,,,

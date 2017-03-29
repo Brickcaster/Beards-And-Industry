@@ -1,0 +1,8 @@
+name,amount,cost,reqres1,reqresrate1,reqres2,reqresrate2,reqres3,reqresrate3,housing,available,visible,desc
+hut,0,10,,,,,,,1,0,TRUE,Simple housing for one
+infrastructure,0,20,stone,2,,,,,,,,Roads and bridges and gutters
+walls,0,100,stone,20,,,,,,,,Walls to keep invaders out
+towers,0,200,stone,60,,,,,,,,Towers to fortify the wall
+house,0,100,stone,8,,,,,4,0,,Housing for four
+library,0,100,,,,,,,,,,A place for knowledge and research
+parks,0,100,copper bars,2,,,,,,,,Gathering places for community and to showcase monuments
