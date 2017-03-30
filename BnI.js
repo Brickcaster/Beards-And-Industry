@@ -765,8 +765,8 @@ function AddBuilding(building, count) {
 	var bldg = Buildings[building];
 	var CanBuild = true;
 	if (Resources["build points"].stock < bldg.cost * count) { CanBuild = false; }
-	for (i in bldg.reqs) {
-		if (bldg.reqs[i][1] * count > Resources[bldg.reqs[i][0]].stock) { CanBuild = false; }
+	for (i in bldg.addedcost) {
+		if (bldg.addedcost[i] * count > Resources[i].stock) { CanBuild = false; }
 	}
 	if (CanBuild == false) { return; }
 	// Are we still here?  Good!
@@ -774,9 +774,12 @@ function AddBuilding(building, count) {
 	for (i in bldg.reqs) {
 		Resources[bldg.reqs[i][0]].stock -= bldgs.reqs[i][1] * count;
 	}
-	if (bldg.housing > 0) { Resources.population.storage += bldg.housing * count; }
 	bldg.amount += count;
-	
+	// Here we do special stuff depending on the building.
+	if (building == "hut") {
+		Resources.population.storage += 1;
+	}
+		
 	//Now update display.
 	DisplayBuildings();
 }
