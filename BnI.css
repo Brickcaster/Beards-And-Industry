@@ -1,11 +1,12 @@
 ﻿.LeftColumn {
 	width: 50%;
+	height: 100%;
 	margin: 5px;
+	overflow: auto;
 }
 
 .RightColumn {
 	width: 50%;
-	height: 80%;
 	margin: 5px;
 	position: absolute;
 	right: 0;
@@ -32,6 +33,7 @@ table {
 	width: 30%;
 	text-align: center;
 	user-select: none;
+	cursor: pointer;
 }
 
 .hidden {

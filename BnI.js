@@ -1,3 +1,5 @@
+
+
 var Resources = {};
 //var Pop = []; //Depreciated.  People are just another resource.
 var Jobs = {};
@@ -58,25 +60,40 @@ function Reset() {
 	document.getElementById('MessageLog').innerHTML = ''
 	
 	// Let's load our easier to read/edit csv
+	/*
 	var jobsget = new XMLHttpRequest();
 	jobsget.addEventListener("load", function() { ParseCsv(Jobs, jobsget.responseText) } );
 	jobsget.open("GET", "jobs.csv?1");
 	jobsget.send();
+	*/
+	/*
 	
 	var buildingsget = new XMLHttpRequest();
 	buildingsget.addEventListener("load", function() { ParseCsv(Buildings, buildingsget.responseText) } );
 	buildingsget.open("GET", "buildings.csv");
 	buildingsget.send();
-	
+	*/
+	/*
 	var resget = new XMLHttpRequest();
 	resget.addEventListener("load", function() { ParseCsv(Resources, resget.responseText); } );
 	resget.open("GET", "resources.csv");
 	resget.send();
+	*/
 	
+	/*
 	var researchget = new XMLHttpRequest();
 	researchget.addEventListener("load", function() { ParseCsv(Research, researchget.responseText); } );
 	researchget.open("GET", "research.csv");
 	researchget.send();
+	*/
+	
+	ResetResources();
+	ResetJobs();
+	ResetBuildings();
+	ResetResearch();
+	
+	// We're done here.
+	return;
 	
 	//console.log(buildingsget.responseText);
 	// Build the Jobs array
@@ -225,61 +242,54 @@ function UpdateResources() {
 	// Note: This approach does not reserve stock so it's possible for spending to put resources into the negatives!
 	// Scratch that, addressed.  
 	for (var i in Jobs) {
-		if (Jobs[i].workers <= 0) { continue; }
-		//var reqs = true;
-		//if (i == 0) { continue; }
-		var output = [] // Net units produced per tick
-		var outputfactor = 1; // 1 means full steam ahead.  Otherwise we're choked by tools or inputs.
-		//for (var n in Jobs[i].outputs) {
 
-		var dwarfhours = Jobs[i].working * Jobs[i].workrate;
-		
-		var toolrate = Jobs[i].working * Jobs[i].toolrate;
-		// Does job require tools?
-		if (toolrate) {
-			//Clamp based on available tools.
-			var tooltype = "stone tools" //Need to replace with GetBestTool() function.
-			//Job displays as X ( Y ), where X is active and Y are sick/injured/training.
-			var tools = Resources[tooltype].stock + Resources[tooltype].spending;
-			if (tooltype == "stone tools") { toolrate *= 10; } // These break fast.
+		if (Jobs[i].type == "production") {
+			var outputfactor = 1; // 1 means full steam ahead.  Otherwise we're choked by tools or inputs.
+			//for (var n in Jobs[i].outputs) {
+
+			if (Jobs[i].working <= 0) { continue; }
 			
-			// Clamp based on available tools
-			if (Jobs[i].toolrate) { outputfactor = Math.min(outputfactor, tools / toolrate) }
-		}
-		
-		// Clamp based on required materials
-		if (Jobs[i].reqs) {
-			for (n in Jobs[i].reqs) {
-				var required = Jobs[i].reqs[n][1] * dwarfhours
+			var dwarfhours = Jobs[i].working * Jobs[i].speed * Jobs[i].eventfactor;
+			
+			var toolrate = Jobs[i].working * Jobs[i].toolrate;
+
+			// Does job require tools?
+			if (toolrate > 0) {
+				//Clamp based on available tools.
+				var tooltype = "stone tools" //Need to replace with GetBestTool() function.
+				//Job displays as X ( Y ), where X is active and Y are sick/injured/training.
+				var tools = Resources[tooltype].stock + Resources[tooltype].spending;
+				if (tooltype == "stone tools") { toolrate *= 10; } // These break fast.
+				
+				// Clamp based on available tools
+				outputfactor = Math.min(outputfactor, tools / toolrate);
+			}
+			
+			// Clamp based on required materials
+			for (var n in Jobs[i].inputs) {
+				var required = Jobs[i].inputs[n] * dwarfhours
 				if (required > 0) {
-					outputfactor = Math.min(outputfactor, (Resources[Jobs[i].reqs[n][0]].stock + Resources[Jobs[i].reqs[n][0]].spending) / required)
+					outputfactor = Math.min(outputfactor, (Resources[n].stock + Resources[n].spending) / required)
 				}
 			}
-			//console.log(Resources[Resources[job].reqs[0][1]])
-		}
-		
-		// Now we know how much we're able to produce so let's perform it.
-		for (n in Jobs[i].outputs) {
-			//Resources[Jobs[i].outputs[n][0]].income += Jobs[i].outputs[n][1] * dwarfhours * outputfactor
-			if (Resources[Jobs[i].outputs[n][0]]) {
-				Resources[Jobs[i].outputs[n][0]].income += Jobs[i].outputs[n][1] * dwarfhours * outputfactor
+			
+			// Now we know how much we're able to produce so let's perform it.
+			for (n in Jobs[i].outputs) {
+				//Resources[Jobs[i].outputs[n][0]].income += Jobs[i].outputs[n][1] * dwarfhours * outputfactor
+				Resources[n].income += Jobs[i].outputs[n] * dwarfhours * outputfactor;
 				//console.log(i + ": Dwarfhours: " + dwarfhours + ", outputfactor: " + outputfactor)
 			}
-			else { console.log("resources." + Jobs[i].outputs[n][0] + " is undefined.") }
-		}
-		
-		for (n in Jobs[i].reqs) {
-			// Example: wood.spending -= productity * build point req rate (which is wood)
-			if (Jobs[i].reqs[n][0]) {
-				Resources[Jobs[i].reqs[n][0]].spending -= Jobs[i].reqs[n][1] * dwarfhours * outputfactor
-			} else {
-				console.log("Resources."+ Jobs[i].reqs[n] + " is undefined.")
+			
+			for (n in Jobs[i].inputs) {
+				Resources[n].spending -= Jobs[i].outputs[n] * dwarfhours * outputfactor;
+			}
+			
+			if (toolrate > 0) {
+				Resources[tooltype].spending -= toolrate * outputfactor;
 			}
 		}
 		
-		if (toolrate) {
-			Resources[tooltype].spending -= toolrate * outputfactor;
-		}
+		//Other types of jobs here.
 	
 	}
 	
@@ -437,18 +447,35 @@ function DisplayResources() {
 	
 	//Moving manual buttons to sit by resources.
 	var div = document.createElement("div")
-	var output = document.createElement("table")
-	output.style='width:40%'
+	div.className = "selfgather"
+	var table = document.createElement("table")
+	table.style='width:40%'
+	
+	var row = document.createElement("row");
 	
 	//Todo: add detect if we have insufficient resources and tag them.
-	output.innerHTML += '<tr><div onclick="AddViaClick(1)" class="button">Gather Food</div></tr>'
-	output.innerHTML += '<tr><div onclick="AddViaClick(2)" class="button">Gather Wood</div></tr>'
-	output.innerHTML += '<tr><div onclick="AddViaClick(3)" class="button">Gather Stone</div></tr>'
-	output.innerHTML += '<tr><div onclick="AddViaClick(4)" class="button">Build</div></tr>'
-	output.innerHTML += '<tr><div onclick="AddViaClick(5)" class="button">Recruit</div></tr>'
-	//output.innerHTML += '</table>'
+	row.innerHTML = '<tr><div onclick="AddViaClick(1)" class="button">Gather Food</div></tr>'
+	table.appendChild(row);
 	
-	div.appendChild(output);
+	row = document.createElement("row");
+	row.innerHTML += '<div onclick="AddViaClick(2)" class="button">Gather Wood</div>'
+	table.appendChild(row);
+	
+	row = document.createElement("row");
+	row.innerHTML += '<div onclick="AddViaClick(3)" class="button">Gather Stone</div>'
+	table.appendChild(row);
+	
+	row = document.createElement("row");
+	row.innerHTML += '<div onclick="AddViaClick(4)" class="button">Build</div>'
+	if (Resources.wood.stock < 2 || Resources.stone.stock < 1) { row.className += " disabled"; }
+	table.appendChild(row);
+	
+	row = document.createElement("row");
+	row.innerHTML += '<tr><div onclick="AddViaClick(5)" class="button">Recruit</div></tr>'
+	if (Resources.population.stock >= Resources.population.storage) { row.className += " disabled"; }
+	table.appendChild(row);
+	
+	div.appendChild(table);
 	target.appendChild(div);
 	
 	//console.log("Updating Resource Table.");
@@ -693,19 +720,19 @@ function AssignWorker(job, count) {
 		return false;
 	}
 
-	if (Jobs[job].toolrate) {
+	if (Jobs[job].toolrate > 0) {
 		//Costs one tool to start.
 		// TODO: Replace with get best tool.
-		assigned = Math.min(Math.floor(Resources["stone tools"].stock), assigned)
 		Resources["stone tools"].stock -= assigned;
 	}
-	if (Jobs[job].workshopbp) {
-		assigned = Math.min(Math.floor( resources["build points"].stock / Jobs[job].workshopbp ), assigned)
+	if (Jobs[job].workshopbp > 0) {
 		resources["build points"].stock -= Jobs[job].workshopbp * assigned;
 	}
-	if (Jobs[job].workshoptime) {
+	if (Jobs[job].trainingtime > 0) {
+		var time = Jobs[job].trainingtime * 1000;
+		
 		Jobs[job].training += assigned;
-		setTimeout( function() {WorkerTrained(job)}, Jobs[job].workshoptime * 1000 ); //This may suffer from closure problems.
+		setTimeout( function() {WorkerTrained(job)}, time ); // Need to detect jobs in training on load and restart timeout.
 	} else {
 		Jobs[job].working += assigned;
 	}
@@ -770,6 +797,7 @@ function UnlockResearch(research) {
 	//Specific rules for specific techs.
 }
 
+//So janky.
 immigration = false;
 
 function CheckEvents() {
