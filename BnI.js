@@ -661,9 +661,9 @@ function AddViaClick(x) {
 		Math.round(Resources.stone.stock * 100) / 100
 	}
 	if (x == 4) {
-		if ( Resources[Jobs["basic builder"].reqs[0][0]].stock > Jobs["basic builder"].reqs[0][1] && Resources[Jobs["basic builder"].reqs[1][0]].stock > Jobs["basic builder"].reqs[1][1] ) {
-			Resources[Jobs["basic builder"].reqs[0][0]].stock -= Jobs["basic builder"].reqs[0][1];
-			Resources[Jobs["basic builder"].reqs[1][0]].stock -= Jobs["basic builder"].reqs[1][1];
+		if ( Resources.wood.stock > 2 && Resources.stone.stock > 1 ) {
+			Resources.wood.stock -= 2;
+			Resources.stone.stock -= 1;
 			Resources["build points"].stock += 1;
 			Math.round(Resources["build points"].stock * 100) / 100
 		} else { DisplayMessage("Not enough wood and stone!") }
