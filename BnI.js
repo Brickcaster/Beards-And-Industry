@@ -509,13 +509,13 @@ function DisplayWorkers() {
 function DisplayJobs() {
 	var target = document.getElementById('Workers');
 	var table = document.createElement("table")
-	table.style = 'width:40%';
+	table.style = 'width:50%';
 	
 	for (var i in Jobs) {
 		if (Jobs[i].visible && !Jobs[i].obsolete) {
 			var row = document.createElement("tr");
 			var button = document.createElement("div");
-			button.key = i;
+			row.key = i;
 			button.className = 'button'
 			//row.innerHTML = "<div class='button'>"
 			if (!CanAssignWorker(i)) { button.className += " disabled"; }
@@ -523,10 +523,24 @@ function DisplayJobs() {
 			if (Jobs[i].training + Jobs[i].sick + Jobs[i].injured > 0) {
 				text += " (" + (Jobs[i].training + Jobs[i].sick + Jobs[i].injured) + ")";
 			}
-			button.addEventListener("click", function() {AssignWorker(this.key);})
+			var plus = document.createElement("div");
+			plus.className = 'button';
+			plus.style.float = "right";
+			plus.innerHTML = "+";
+			plus.addEventListener("click", function() {AssignWorker(this.parentNode.key)}, true) //I'm sure closure will bite me.
+			
+			var minus = document.createElement("div");
+			minus.className = 'button';
+			minus.style.float = "right";
+			minus.innerHTML = "-";
+			minus.addEventListener("click", function() {UnassignWorker(this.parentNode.key)}, true) //I'm sure closure will bite me.
+			
+			button.addEventListener("click", function() {AssignWorker(this.parentNode.key);}, true)
 			//(() => button.addEventListener("click", function() {AssignWorker(i);}))() 
 			button.innerHTML = text;
 			row.appendChild(button)
+			row.appendChild(plus)
+			row.appendChild(minus)
 			table.appendChild(row)
 		}
 	}
@@ -661,7 +675,7 @@ function AddViaClick(x) {
 		Math.round(Resources.stone.stock * 100) / 100
 	}
 	if (x == 4) {
-		if ( Resources.wood.stock > 2 && Resources.stone.stock > 1 ) {
+		if ( Resources.wood.stock >= 2 && Resources.stone.stock >= 1 ) {
 			Resources.wood.stock -= 2;
 			Resources.stone.stock -= 1;
 			Resources["build points"].stock += 1;
@@ -741,7 +755,16 @@ function AssignWorker(job, count) {
 	//Now update display.
 	DisplayJobs();
 }
-		
+
+function UnassignWorker(job, count) {
+	if (typeof(count) === 'undefined') { count =1; }
+	
+	var unassigned = count;
+	unassigned = Math.min(Jobs[job].working, unassigned);
+	
+	Jobs[job].working -= count;
+	Resources.workers.stock += count;
+}
 
 function CanBuild(building) {
 	if ( !Buildings[building] ) {
@@ -750,7 +773,7 @@ function CanBuild(building) {
 		return false;
 	}
 	
-	if (Resources["build points"].stock < Buildings[building]) { return false; }
+	if (Resources["build points"].stock < Buildings[building].cost) { return false; }
 	for (i in Buildings[building].reqs) {
 		if (Buildings[building].reqs[i][1] > Resources[Buildings[building].reqs[i][0]].stock) { return false; }
 	}
