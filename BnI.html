@@ -6,8 +6,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 	<link rel="stylesheet" href="BnI.css">
-	<script type="text/javascript" src="BnI.js" defer=defer charset="utf-8"></script>
 	<script type="text/javascript" src="data.js" defer=defer charset="utf-8"></script>
+  <script type="text/javascript" src="BnI.js" defer=defer charset="utf-8"></script>
+	
 	
 	<title>Beards and Industry</title>
 	
@@ -51,11 +52,11 @@
  
  <div id="Buildings">Buildings go here.</div><br>
  
- <div id="Research" class="hidden">Research goes here.</div><br>
+ <div id="Research" class="hidden"></div><br>
  
  <div id="Services" class="hidden">Services go here.</div><br>
  
- <button id="Reset" onclick="Reset()">Reset!</button><br>	
+ <button id="Reset" onclick="localStorage.clear(); Reset()">Reset!</button><br>	
  
  <!-- <div id="ResDebug"></div> -->
 </div>

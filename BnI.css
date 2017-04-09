@@ -1,4 +1,9 @@
-﻿.LeftColumn {
+﻿body {
+	background: black;
+	color: white;
+}
+
+.LeftColumn {
 	width: 50%;
 	height: 100%;
 	margin: 5px;
@@ -30,7 +35,7 @@ table {
 	border-style: solid;
 	margin: 5px;
 	padding: 5px;
-	width: 30%;
+	//width: 30%;
 	text-align: center;
 	user-select: none;
 	cursor: pointer;

@@ -1,9 +1,7 @@
-
-
 var Resources = {};
 //var Pop = []; //Depreciated.  People are just another resource.
 var Jobs = {};
-var Buildings = {}; // I want to put these into object GameData so I can save/load that.
+var Buildings = {};
 var Research = {};
 var Events = [];
 //var GameData = [Resources, Buildings, Events]
@@ -21,6 +19,8 @@ setInterval(function(){
 	
 	DisplayBuildings(); // Updating this every tick may be causing causing some clicks to not be registered.
 	
+	UpdateResearch(); //This uses a build-once method.
+	
 	DisplayServices();
 	
 	CheckEvents();
@@ -31,6 +31,14 @@ setInterval(function(){
 
 // Data management
 // Save
+setInterval(function() {
+	SaveGame();
+}, 15000);
+
+LoadGame();
+
+// Old methods
+/*
 setInterval(function(){
 	localStorage.setItem("Resources", JSON.stringify(Resources));
 	localStorage.setItem("Buildings", JSON.stringify(Buildings));
@@ -39,16 +47,20 @@ setInterval(function(){
 	localStorage.setItem("Events", JSON.stringify(Events));
 	//console.log("Game Saved.");
 }, 15000);
+*/
 
-// Load 
+// Load
+/*
 if (localStorage.Resources) { Resources = JSON.parse(localStorage.getItem("Resources")); }
 if (localStorage.Buildings) { Buildings = JSON.parse(localStorage.getItem("Buildings")); }
 if (localStorage.Jobs) { Jobs = JSON.parse(localStorage.getItem("Jobs")); }
 if (localStorage.Research) { Research = JSON.parse(localStorage.getItem("Research")); }
 if (localStorage.Events) { Events = JSON.parse(localStorage.getItem("Events")); }
 else { Reset() }
+*/
 
-// Hard Reset
+
+// Reset -- Savedata is wiped elsewhere
 function Reset() {
 	Resources = {};
 	Buildings = {};
@@ -91,6 +103,10 @@ function Reset() {
 	ResetJobs();
 	ResetBuildings();
 	ResetResearch();
+	
+	Resources.population.stock = 7;
+	Jobs.hunting.working = 3;
+	Resources.workers.stock = 3;
 	
 	// We're done here.
 	return;
@@ -225,8 +241,7 @@ function Reset() {
 	
 }
 
-
-<!-- Game logic functions -->
+// Game logic functions
 function UpdateResources() {
 
 	// Reset and recalculate incomes
@@ -234,15 +249,13 @@ function UpdateResources() {
 		Resources[i].income = 0;
 		Resources[i].spending = 0;
 	}
-	
+		
 	// Workers need to eat
 	Resources.food.spending -= Resources.population.stock;
 	//console.log("Food eaten: " + Resources["food"].spending);
 	
-	// Note: This approach does not reserve stock so it's possible for spending to put resources into the negatives!
-	// Scratch that, addressed.  
 	for (var i in Jobs) {
-
+		
 		if (Jobs[i].type == "production") {
 			var outputfactor = 1; // 1 means full steam ahead.  Otherwise we're choked by tools or inputs.
 			//for (var n in Jobs[i].outputs) {
@@ -270,18 +283,19 @@ function UpdateResources() {
 				var required = Jobs[i].inputs[n] * dwarfhours
 				if (required > 0) {
 					outputfactor = Math.min(outputfactor, (Resources[n].stock + Resources[n].spending) / required)
+					//outputfactor = Resources[n].stock / required
 				}
 			}
-			
+						
 			// Now we know how much we're able to produce so let's perform it.
 			for (n in Jobs[i].outputs) {
-				//Resources[Jobs[i].outputs[n][0]].income += Jobs[i].outputs[n][1] * dwarfhours * outputfactor
 				Resources[n].income += Jobs[i].outputs[n] * dwarfhours * outputfactor;
+				if (Resources[n].income === NaN) { console.log(i + " processing error, output " + n + " is NaN!") }
 				//console.log(i + ": Dwarfhours: " + dwarfhours + ", outputfactor: " + outputfactor)
 			}
 			
 			for (n in Jobs[i].inputs) {
-				Resources[n].spending -= Jobs[i].outputs[n] * dwarfhours * outputfactor;
+				Resources[n].spending -= Jobs[i].inputs[n] * dwarfhours * outputfactor;
 			}
 			
 			if (toolrate > 0) {
@@ -293,50 +307,15 @@ function UpdateResources() {
 	
 	}
 	
-	/*<!-- Old worker-based approach.  Switching to simpler.
-	for (var i in Pop) {		
-		var job = Pop[i].job;
-		
-		//Check for home
-		if (Pop[i].house == -1) {
-			//We assume the good buildings come later
-			for (var n = Buildings.length - 1; n <= 0; n--) {
-				if (Building[n].available > 0) {
-					Buildings[n].available--;
-					Pop[i].house = n;
-					break;
-				}
-			}
-			//Mid-game: Still here?  Deduct morale
-		}
-				
-		// DoJob();
-		if (job >= 0) {
-			var reqs = true;
-			Resources[job].workers += 1;
-			Pop[i].productivity = Math.max(0, Pop[i].morale/100) * Resources[job].workrate *
-				(0.8 + 0.2 * Math.pow(Pop[i]["experience"]/100, 0.273)); //0.237 chosen because it means 30d to 3x production
-			if (Resources[job].reqs) {
-				for (n in Resources[job].reqs) {
-					if (Pop[i].productivity * Resources[job].reqs[n][1] > Resources[Resources[job].reqs[n][0]].stock) {
-						reqs = false;
-					}
-				}
-				//console.log(Resources[Resources[job].reqs[0][1]])
-			}
-			
-			if (reqs == false) { continue; }
-			
-			Pop[i].experience += Math.max(0, Pop[i].morale/100) // Needs dt
-			
-			for (n in Resources[job].reqs) {
-				// Example: wood.spending -= productity * build point req rate (which is wood)
-				Resources[Resources[job].reqs[n][0]].spending -= Pop[i].productivity * Resources[job].reqs[n][1]
-			}
-			Resources[job].income += Pop[i].productivity;
-		}
-		//Mid-game: If job == -1 deduct morale.
-	} */
+	//Special rules.  Hunting depletes.  Prospecting depletes.
+	
+	//Need to have an event for this to notify player.
+	//This formula should support a community of about 45 hunters.
+	Jobs.hunting.eventfactor -= ((Jobs.hunting.eventfactor - 1) + Jobs.hunting.working/200) / 120;
+	
+	
+	
+	// Income happens here.
 	for (var i in Resources) {
 		Resources[i].stock += Resources[i].income; // Needs dt
 		Resources[i].stock += Resources[i].spending; // Needs dt
@@ -414,7 +393,7 @@ function DisplayResources() {
 	
 	target.innerHTML = '';
 	
-	var div = document.createElement("div");
+	var div = document.createElement("span"); //Switching to span so it doens't linebreak?
 	var table = document.createElement("table");
 	//table.style = 'width:40%';
 	//var table = "<table style='width:40%'><b><tr style='font-weight:bold'><td></td><td>Stock</td><td>/</td><td>Max</td><td>Rate</td></tr></b>"; //The table header
@@ -427,7 +406,7 @@ function DisplayResources() {
 			//output += "<tr onclick='AddWorker(" + i + ")'>";
 			var row = document.createElement("tr");
 			var output = "<td>" + i + "</td>";
-			output += "<td>" + Math.max(0, TwoDigit(Resources[i].stock)) + "</td>";
+			output += "<td>" + TwoDigit(Math.max(Resources[i].stock, 0)) + "</td>";
 			if (Resources[i].storage) {
 				output += "<td>/</td>";
 				output += "<td>" + TwoDigit(Resources[i].storage) + "</td>"; }
@@ -446,7 +425,7 @@ function DisplayResources() {
 	target.appendChild(div);
 	
 	//Moving manual buttons to sit by resources.
-	var div = document.createElement("div")
+	var div = document.createElement("span")
 	div.className = "selfgather"
 	var table = document.createElement("table")
 	table.style='width:40%'
@@ -517,6 +496,7 @@ function DisplayJobs() {
 			var button = document.createElement("div");
 			row.key = i;
 			button.className = 'button'
+			button.style.float = 'left';
 			//row.innerHTML = "<div class='button'>"
 			if (!CanAssignWorker(i)) { button.className += " disabled"; }
 			var text = i + ": " + Jobs[i].working;
@@ -597,6 +577,33 @@ function DisplayBuildings() {
 	//console.log("Updating Resource Table.");
 }
 
+function UpdateResearch() {
+	var target = document.getElementById('Research');
+	if (target.innerHTML == '') {
+		for (var i in Research) {
+			var button = document.createElement("div")
+			button.className = "button";
+			button.setAttribute("id","Res" + i);
+			button.innerHTML = i;
+			button.style = "display:none"
+			button.addEventListener("click", function() { DoResearch(this.innerHTML); });
+			target.appendChild(button);
+		}
+	}
+	
+	for (var i in Research) {
+		var button = document.getElementById("Res" + i);
+		if (!button) {
+			//console.log("Research button " + i + " not found.");
+			continue;
+		}
+		if (Research[i].visible == true && !Research[i].completed ) { button.style = '' }
+		if (Research[i].completed) { button.style = "display:none"; }
+		if (CanResearch(i)) { button.className = "button"; }
+			else { button.className = "button disabled"; }
+	}
+}
+
 function DisplayServices() {
 	var target = document.getElementById('Services')
 	var output = "<table style='width:40%'>"
@@ -606,14 +613,38 @@ function DisplayServices() {
 function DisplayMessage(msg) {
 	var target = document.getElementById('MessageLog');
 	var message = document.createElement("div");
-	message.className = "message";
-	message.innerHTML = msg
-	target.appendChild(message);
+	var inner = document.createElement("span");
+	var count = document.createElement("span");
+	var last;
 	
-	// Now clean old messages.
-	var messages = document.querySelectorAll("div.message");
-	// messages[0].
-	if (messages.length > 20) { messages[0].remove(); }
+	if  (target.lastChild) {
+		last = target.lastChild.firstChild;
+	} else {
+		last = {innerHTML: undefined}
+	}
+	
+	message.className = "message";
+	inner.innerHTML = msg;
+	if (last.innerHTML == inner.innerHTML) {
+		count = target.lastChild.lastChild
+		//Increase count.
+		var countnum = count.innerHTML;
+		if (countnum == "") {
+			target.lastChild.lastChild.innerHTML = " x2"
+		} else {
+			countnum = +countnum.replace(" x", "") + 1;
+			count.innerHTML = " x" + countnum;
+		}
+	} else {
+		message.appendChild(inner);
+		message.appendChild(count);
+		target.appendChild(message);
+	
+		// Now clean old messages.
+		var messages = document.querySelectorAll("div.message");
+		// messages[0].
+		if (messages.length > 20) { messages[0].remove(); }
+	}
 }
 
 // Gonna shelve this.  AddViaClick manipulates stock directly and UpdateResources() relies on +income -spending first then modifies stock.
@@ -638,19 +669,28 @@ function CapResources() {
 }
 
 // Note: Need to handle what happens during game load as the timers will get dropped.
-function WorkerTrained(job) {
-	Jobs[job].training -= 1;
-	Jobs[job].working += 1;
+function WorkerTrained(job, count) {
+	if (typeof(count)==='undefined') { count = 1; }
+	if (count > Jobs[job].training) { console.log("Worker training - Converting more workers than we have training."); }
+	
+	Jobs[job].training -= count;
+	Jobs[job].working += count;
 }
 
-function WorkerCured(job) {
-	Jobs[job].sick -= 1;
-	Jobs[job].working += 1;
+function WorkerCured(job, count) {
+	if (typeof(count)==='undefined') { count = 1; }
+	if (count > Jobs[job].sick) { console.log("Worker cured - Converting more workers than we have sick."); }
+	
+	Jobs[job].sick -= count;
+	Jobs[job].working += count;
 }
 
-function Workerhealed(job) {
-	Jobs[job].training -= 1;
-	Jobs[job].working += 1;
+function Workerhealed(job, count) {
+	if (typeof(count)==='undefined') { count = 1; }
+	if (count > Jobs[job].injured) { console.log("Worker healed - Converting more workers than we have injured."); }
+	
+	Jobs[job].injured -= count;
+	Jobs[job].working += count;
 }
 
 // Not used.  Probably won't use this.
@@ -666,7 +706,7 @@ function AddViaClick(x) {
 		Math.round(Resources.food.stock * 100) / 100
 	}
 	if (x == 2) {
-		console.log("Incrementing wood from " + Resources.wood.stock)
+		//console.log("Incrementing wood from " + Resources.wood.stock)
 		Resources.wood.stock += 1;
 		Math.round(Resources.wood.stock * 100) / 100
 	}
@@ -757,13 +797,17 @@ function AssignWorker(job, count) {
 }
 
 function UnassignWorker(job, count) {
-	if (typeof(count) === 'undefined') { count =1; }
+	if (typeof(count) === 'undefined') { count = 1; }
 	
 	var unassigned = count;
 	unassigned = Math.min(Jobs[job].working, unassigned);
 	
-	Jobs[job].working -= count;
-	Resources.workers.stock += count;
+	if (unassigned < 0) { 
+		console.log("UnassignWorker(), invalid request.");
+		return;
+	}
+	Jobs[job].working -= unassigned;
+	Resources.workers.stock += unassigned;
 }
 
 function CanBuild(building) {
@@ -807,17 +851,27 @@ function AddBuilding(building, count) {
 	DisplayBuildings();
 }
 
+function CanResearch(research) {
+	if (Resources["research points"].stock < Research[research].cost) { return false; }
+	
+	return true;
+}
+
+function DoResearch(research) {
+	if (CanResearch(research)) { UnlockResearch(research); }
+}
+
 function UnlockResearch(research) {
 	Research[research].completed = true;
 	//Unlock the next tech in the tree.
-	for (var n = 1; n = 3; n++) {
-		if (Research[research]["unlock" + i]) {
-			if (Research[Research[research]["unlock" + i]]) {
-				Research[Research[research]["unlock" + i]].visible = true;
-			} else {
-				console.log("Invalid research!  " + Research[research]["unlock" + i] + " is undefined!")
-			}
-		}
+	for (var n in Research[research].nextresearch) {
+		Research[n].visible = true;
+	}
+	for (var n in Research[research].newjobs) {
+		Jobs[n].visible = true;
+	}
+	for (var n in Research[research].newbuildings) {
+		Buildings[n].visible = true;
 	}
 	
 	//Specific rules for specific techs.
@@ -828,6 +882,7 @@ immigration = false;
 
 function CheckEvents() {
 	// Check for immigration
+	var immigration = false;
 	if (immigration == false) {
 		if (Resources.population.stock < Resources.population.storage) {
 			setTimeout(function() { 
@@ -838,7 +893,7 @@ function CheckEvents() {
 		}
 	}
 	// Check for starvation warning
-	if (Events[2] && Resources.food.stock < 100 && (Resources.food.income + Resources.food.spending) < 0) {
+	if (Resources.food.income + Resources.food.spending < 0 && Resources.food.stock / (Resources.food.income + Resources.food.spending) > -120 ) {
 		DisplayMessage("Our people are in danger of starving.");
 	}
 		
@@ -849,7 +904,7 @@ function CheckOnceEvents() {
 	// Game start
 	if (!Events[0]) {
 		Events[0] = true;
-		DisplayMessage("You are seven highly motivated dwarves ready to tame the mountain inside and out.  Your six compansions gather food while you set up shelter.");
+		DisplayMessage("You are seven highly motivated dwarves ready to tame the mountain inside and out.");
 	}
 	if (!Events[1]) {
 		if (Resources.population.storage > 7) {
@@ -863,10 +918,17 @@ function CheckOnceEvents() {
 		if (Resources["research points"].stock > 1) {
 			//Show research
 			Events[2] = true;
-			document.getElementById("Research").className = ""
+			document.getElementById("Research").className = "" //Unhide research
 			Research["tools"].visible = true;
 		}
 	}
+	if (!Events[3]) {
+		if (Jobs.hunting.working >= 40) {
+			Events[3] = true;
+			DisplayMessage("Game is becoming more scarce.  We must find other sources of food.");
+		}
+	}
+	
 			
 
 	// Helper functions.
@@ -885,7 +947,7 @@ function AddDwarf() {
 	Resources.workers.stock += 1; //Should rename this function.  May want to add population without adding workers (births, refugees)
 }
 
-<!-- Game Helper Functions -->
+// Game Helper Functions
 // Depreciated
 /*
 function Dwarf() {
@@ -915,7 +977,8 @@ function ResourceJob() {
 }
 */
 
-<!-- General Helper Functions -->
+// General Helper Functions
+
 function TwoDigit(x) {
 	if (x > 1e7) {
 		return( (x / 1e6).toFixed(2) + "M" );
@@ -945,8 +1008,6 @@ window.onmouseover = function(event) {
 		document.getElementById('myModal').style.display = "block";
 	}
 }
-
-//console.log("Are we here yet?");
 
 //Open Modal
 /*window.onclick = function(event) {

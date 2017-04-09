@@ -1,0 +1,15 @@
+Beards and Industry take 2
+
+Game flow:
+
+Start with 7 dwarves, 6 assigned to hunting and gathering.  1.2 food per second per farmer, so net of 0.2 food
+
+Basic storage is 1000 food, 1000 wood, 1000 stone, 1000 build points.
+
+Buttons available are, "Gather food" "Gather Wood" "Gather Stone" "Construction buildings" "Build Hut"
+
+At 8 huts, another dwarf arrives and the jobs button appears.
+
+*****
+
+Administrators generate policy points to enable some options.  As PP spending increases, so does PP spending, necessitating even more administrators!

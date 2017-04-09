@@ -51,7 +51,6 @@
 	
 	Resources["population"] = new Resource(0);
 	Resources.population.visible = true;
-	Resources.population.stock = 7;
 	Resources["workers"] = new Resource();
 	Resources.workers.visible = true;
 }
@@ -65,7 +64,7 @@ function ResetJobs() {
 			this.working = 0;
 			this.training = 0;
 			this.sick = 0;
-			this.injured = [[]];
+			this.injured = 0;
 			this.visible = false;
 			this.obsolete = false;
 			this.traintime = 0;
@@ -89,12 +88,11 @@ function ResetJobs() {
 		}
 		
 	}
-	
-	
+		
 	//Starting jobs.
-	Jobs.hunting = new Production(undefined, {food: 1.2, skins: 0.2}, 1);
+	Jobs.hunting = new Production(undefined, {food: 1, skins: 0.2}, 2.5);
 	Jobs.hunting.visible = true;
-	Jobs.hunting.working = 6;
+//	Jobs.hunting.working = 3; //Handled in Reset()
 	Jobs["wood gathering"] = new Production(undefined, {wood: 1}, 0.15);
 	Jobs["wood gathering"].visible = true;
 	Jobs["stone gathering"] = new Production(undefined, {stone: 1}, 0.10);
@@ -104,7 +102,18 @@ function ResetJobs() {
 	
 	Jobs.elder = new Production(undefined, {"research points":1}, 1);
 	
+	// Tier 2 jobs
 	Jobs["stone toolmaker"] = new Production({wood: 1, stone:1}, {"stone tools": 1}, 0.65);
+	Jobs.farming = new Production(undefined, {food:1.4, skins: 0.15}, 1);
+	Jobs.farming.toolrate = 0.001;
+	Jobs.farming.trainingtime = 120;
+
+	Jobs.woodcutter = new Production(undefined, {wood:1}, 0.3);
+	Jobs.woodcutter.toolrate = 0.001;
+	
+	Jobs.stonecutter = new Production(undefined, {stone:1}, 0.2);
+	Jobs.stonecutter.toolrate = 0.005;
+	
 	
 	//Now validate jobs according to resources.
 	
@@ -157,6 +166,7 @@ function ResetResearch() {
 		constructor(cost, nextresearch, newjobs, newbuildings) {
 			this.cost = cost
 			this.visible = false;
+			this.completed = false;
 			// These are what the research unlocks.
 			if (nextresearch !== undefined) {
 				this.nextresearch = [];
@@ -179,8 +189,97 @@ function ResetResearch() {
 		}
 	}
 	
-	Research.tools = new Res(10, ["writing"], ["stone toolmaker"]);
-	Research.tools.visible = true;
+	Research.tools = new Res(10, {"writing":undefined}, {"stone toolmaker":undefined});
+	//Research.tools.visible = true;
 	
 	Research.writing = new Res(20, ["metal working"]);
+}
+
+function SaveGame() {
+	var SaveGame = {};
+	var ResourceSave = {};
+	var SaveJobs = {};
+	var SaveBuildings = {};
+	var SaveResearch = {};
+
+	SaveGame.version = 0.001;
+	SaveGame.Resources = ResourceSave;
+	SaveGame.Jobs = SaveJobs;
+	SaveGame.Buildings = SaveBuildings;
+	SaveGame.Research = SaveResearch;
+	SaveGame.Events = Events; // This is an array so that's all that's needed.
+	
+	for (var i in Resources) {
+		ResourceSave[i] = {};
+		ResourceSave[i].stock = Resources[i].stock;
+		ResourceSave[i].visible = Resources[i].visible;
+	}
+	
+	for (var i in Jobs) {
+		SaveJobs[i] = {};
+		SaveJobs[i].working = Jobs[i].working;
+		SaveJobs[i].training = Jobs[i].training;
+		SaveJobs[i].sick = Jobs[i].sick;
+		SaveJobs[i].injured = Jobs[i].injured;
+		SaveJobs[i].eventfactor = Jobs[i].eventfactor;
+		SaveJobs[i].visible = Jobs[i].visible;
+		SaveJobs[i].obsolete = Jobs[i].obsolete;
+	}
+
+	for (var i in Buildings) {
+		SaveBuildings[i] = {};
+		SaveBuildings[i].amount = Buildings[i].amount;
+		SaveBuildings[i].visible = Buildings[i].visible;
+	}
+
+	for (var i in Research) {
+		SaveResearch[i] = {};
+		SaveResearch[i].completed = Research[i].completed;
+		SaveResearch[i].visible = Research[i].visible;
+	}
+	
+	localStorage.setItem("SaveGame", JSON.stringify(SaveGame));
+	
+}
+
+function LoadGame() {
+
+	var SaveGame;
+	if (localStorage.SaveGame) { SaveGame = JSON.parse(localStorage.getItem("SaveGame")); }
+	else { console.log( "Savegame data doesn't exist!" ); }
+
+	Reset();
+
+	var ResourceSave = SaveGame.Resources;
+	var JobsSave = SaveGame.Jobs;
+	var ResearchSave = SaveGame.Research;
+	
+	/* This does not work.  ResourceSave.food overwrites Resources.food, dropping Resources.stock, for example.
+	Object.assign(Resources, ResourceSave); //This should simplify loading.
+	Object.assign(Jobs, JobsSave);
+	Object.assign(Buildings, SaveGame.Buildings);
+	Object.assign(Research, SaveGame.Research);
+	*/
+
+	Events = SaveGame.Events;
+	
+	
+	for (var i in ResourceSave) {
+		Object.assign(Resources[i], ResourceSave[i]);
+	}
+	
+	for (var i in JobsSave) {
+		Object.assign(Jobs[i], JobsSave[i]);
+	}
+
+	for (var i in ResearchSave) {
+		Object.assign(Research[i], ResearchSave[i]);
+	}
+
+	// Need to rebuild our timeouts for workers in training, sick, injured, etc
+	Object.keys(Jobs).forEach( function(job) {
+		if (Jobs[job].training > 0) {
+			setTimeout( function() {WorkerTrained(job)}, time ); // Need to detect jobs in training on load and restart timeout.
+		}
+	});
 }
